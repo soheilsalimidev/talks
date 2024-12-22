@@ -1,4 +1,4 @@
----
+<!-- ---
 layout: 'intro'
 ---
 
@@ -25,4 +25,4 @@ Working at NuxtLabs.<br>
 
 <div flex="~ gap2">
 
-</div>
+</div> -->
