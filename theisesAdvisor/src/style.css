@@ -160,3 +160,11 @@ iframe {
   width: 1.6em;
   border-radius: 50%;
 }
+
+#slidev-goto-dialog .autocomplete-list {
+  display: none;
+}
+
+#slidev-goto-dialog:not(.-top-20) .autocomplete-list {
+  display: block;
+}

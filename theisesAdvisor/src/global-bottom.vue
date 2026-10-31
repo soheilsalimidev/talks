@@ -13,6 +13,7 @@ import seedrandom from 'seedrandom'
  * - glowSeed: string | false - Seed for the stable random distribution (default: 'default')
  */
 import { computed, ref, watch } from 'vue'
+import AskSlides from './components/AskSlides.vue'
 
 const { currentSlideRoute } = useNav()
 
@@ -150,31 +151,23 @@ const poly3 = usePloy(3)
 </script>
 
 <template>
-  <div
-    class="bg transform-gpu overflow-hidden pointer-events-none"
-    :style="{ filter: `blur(70px) hue-rotate(${hue}deg)` }"
-    aria-hidden="true"
-  >
-    <div
-      class="clip bg-gradient-to-r from-[#00DC82] to-white/10"
-      :style="{ 'clip-path': `polygon(${poly1})`, 'opacity': opacity }"
-    />
-    <div
-      class="clip bg-gradient-to-l from-[#2f96ad] to-white/10"
-      :style="{ 'clip-path': `polygon(${poly2})`, 'opacity': opacity }"
-    />
-    <div
-      class="clip bg-gradient-to-t from-lime to-white/10"
-      :style="{ 'clip-path': `polygon(${poly3})`, 'opacity': 0.2 }"
-    />
+  <div class="bg transform-gpu overflow-hidden pointer-events-none"
+    :style="{ filter: `blur(70px) hue-rotate(${hue}deg)` }" aria-hidden="true">
+    <div class="clip bg-gradient-to-r from-[#00DC82] to-white/10"
+      :style="{ 'clip-path': `polygon(${poly1})`, 'opacity': opacity }" />
+    <div class="clip bg-gradient-to-l from-[#2f96ad] to-white/10"
+      :style="{ 'clip-path': `polygon(${poly2})`, 'opacity': opacity }" />
+    <div class="clip bg-gradient-to-t from-lime to-white/10"
+      :style="{ 'clip-path': `polygon(${poly3})`, 'opacity': 0.2 }" />
   </div>
-  <div class="slidev-layout relative">
+  <div class="slidev-layout relative z-10">
     <slot />
-    <div 
-      class="page-number absolute bottom-4 left-4 text-sm opacity-50"
-    >
-      <SlideCurrentNo /> /  <SlidesTotal />
+    <div class="page-number  flex items-center justfiy-center absolute bottom-4 left-4 text-sm opacity-50">
+      <SlideCurrentNo /> /
+      <SlidesTotal /> .
+      <AskSlides class="ms-4"/>
     </div>
+
   </div>
 </template>
 

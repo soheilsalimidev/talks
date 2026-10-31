@@ -14,6 +14,13 @@ fonts:
 layout: intro
 ---
 
+
+---
+layout: intro
+class: pl-30
+glowSeed: 14
+---
+
 <h1 flex="~ col">
 <div text-2xl origin-top-left transition duration-500 :class="$clicks <= 2 ? 'scale-150' : 'op50'">
   <span v-click> 
