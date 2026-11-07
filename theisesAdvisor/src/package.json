@@ -12,5 +12,8 @@
     "chroma-js": "catalog:",
     "vis-data": "catalog:",
     "vis-network": "catalog:"
+  },
+  "dependencies": {
+    "pixel-wizards-charachters": "^1.7.0"
   }
 }

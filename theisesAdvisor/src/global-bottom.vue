@@ -165,9 +165,9 @@ const poly3 = usePloy(3)
     <div class="page-number  flex items-center justfiy-center absolute bottom-4 left-4 text-sm opacity-50">
       <SlideCurrentNo /> /
       <SlidesTotal /> .
-      <AskSlides class="ms-4"/>
+      <AskSlides class="ms-4" />
     </div>
-
+    <AiExplain />
   </div>
 </template>
 

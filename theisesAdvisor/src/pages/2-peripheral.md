@@ -40,6 +40,22 @@
 </div>
 
 ---
+payload:
+  parts:
+    - text: "Hello! I am ready."
+      audio: "/audio.wav"
+      emotion: "happy"
+      gesture: "wave"
+      locomotion: "idle"
+      speed: 1
+
+    - text: "Let's go."
+      audio: "/audio.wav"
+      emotion: "excited"
+      gesture: "point"
+      locomotion: "walk"
+      speed: 0.9
+---
 
 # Frozen LLM → Trained KT Backbone
 

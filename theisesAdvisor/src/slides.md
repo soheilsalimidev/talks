@@ -1,7 +1,7 @@
 ---
 highlighter: shiki
 css: unocss
-colorSchema: light
+colorSchema: dark
 transition: fade-out
 mdc: true
 title: Peripherals around LLM KT Models 

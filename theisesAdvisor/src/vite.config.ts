@@ -1,6 +1,6 @@
 import fsp from 'node:fs/promises'
 import { defineConfig } from 'vite'
-import baseConfig from '../../vite.config'
+import baseConfig from '../../vite.config.ts'
 
 // Ensure the .nuxt directory exists
 await fsp.mkdir('yak-shaving-map/.nuxt', { recursive: true })
