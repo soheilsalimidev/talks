@@ -4,13 +4,13 @@ css: unocss
 colorSchema: dark
 transition: fade-out
 mdc: true
-title: Peripherals around LLM KT Models 
+title: Peripherals around LLM KT Models
 remoteAssets: false
 fonts:
   sans: Inter
   serif: Robot Slab
   mono: Fira Code
-  local: [Inter, 'Robot Slab', 'Fira Code']
+  local: [ Inter, 'Robot Slab', 'Fira Code' ]
 layout: intro
 ---
 

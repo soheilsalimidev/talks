@@ -1,9 +1,13 @@
+
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { parseArgs } from "node:util";
 import { pathToFileURL } from "node:url";          // ← new
 import { logger } from "./logger.js";
+import './load-env.js';
 import { generateRoute } from "./routes/generate.js";
+import { voiceRoutes } from "./routes/voice-route.js";
+
 
 export async function buildServer(slidesFile: string) {   // ← added `export`
   const app = Fastify({ logger: false });
@@ -31,6 +35,7 @@ export async function buildServer(slidesFile: string) {   // ← added `export`
   });
 
   await app.register(generateRoute, { slidesFile });
+  await app.register(voiceRoutes);
 
   return app;
 }
