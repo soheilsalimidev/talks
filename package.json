@@ -1,7 +1,6 @@
 {
   "type": "module",
   "private": true,
-  "packageManager": "pnpm@12.16.1",
   "scripts": {
     "build": "rimraf dist && pnpm -r run build",
     "dev": "esno scripts/picker.ts dev --open",
@@ -32,7 +31,6 @@
     "fast-glob": "catalog:",
     "markdown-it-magic-link": "catalog:",
     "playwright-chromium": "catalog:",
-    "pnpm": "catalog:",
     "prettier-plugin-slidev": "catalog:",
     "prompts": "catalog:",
     "rimraf": "catalog:",
