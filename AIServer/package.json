@@ -1,0 +1,31 @@
+{
+  "name": "AIServer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts --slides ./../slrStudentModeling/src/slides.md",
+    "build": "tsc",
+    "test": "vitest",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/cors": "^11.3.1",
+    "@types/node": "^26.6.6",
+    "fastify": "^5.12.7",
+    "js-yaml": "^5.5.0",
+    "node-record-lpcm16": "^1.0.1",
+    "openai": "^7.53.0",
+    "pino": "^10.4.0",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "devDependencies": {
+    "pino-pretty": "^13.2.0",
+    "vitest": "^5.0.5"
+  }
+}

@@ -43,14 +43,13 @@
 payload:
   parts:
     - text: "Hello! I am ready."
-      audio: "/audio.wav"
+      audio: "/audio/hello.mp3"
       emotion: "happy"
       gesture: "wave"
       locomotion: "idle"
       speed: 1
-
     - text: "Let's go."
-      audio: "/audio.wav"
+      audio: "/audio/lets-go.mp3"
       emotion: "excited"
       gesture: "point"
       locomotion: "walk"
@@ -589,151 +588,6 @@ Trace back from the answer through the KG → keep only contributive generations
 </div>
 
 ---
-<div flex="~ col gap-3" py2>
-
-  <div flex="~ items-center gap-3" bg-rose:10 border="~ rose/30 rounded-lg" px4 py2.5>
-    <div class="i-carbon:close-filled text-3xl text-rose-6"></div>
-    <div>
-      <div text-lg font-bold text-rose-6>No — 500M is a <i>small</i> LLM by 2025 standards.</div>
-      <div text-xs op70>It lives in the edge / deployment tier — two to three orders of magnitude below frontier models.</div>
-    </div>
-  </div>
-
-  <div v-click="1" bg-gray:10 border="~ gray/30 rounded-lg" px4 py3>
-    <div flex="~ items-center justify-between" mb2>
-      <div text-sm font-semibold op80>Where 500M sits</div>
-      <div text-xs op50>approximate log scale · parameters</div>
-    </div>
-    <div flex="~" h-9 rounded-lg overflow-hidden border="~ gray/25" text-[10px] font-mono font-bold>
-      <div flex="~ items-center justify-center bg-rose:35 text-rose-9" style="width:9%">0.5B</div>
-      <div flex="~ items-center justify-center bg-amber:25 text-amber-9" style="width:13%">1.3B</div>
-      <div flex="~ items-center justify-center bg-teal:25 text-teal-9" style="width:22%">7B</div>
-      <div flex="~ items-center justify-center bg-sky:25 text-sky-9" style="width:24%">70B</div>
-      <div flex="~ items-center justify-center bg-indigo:30 text-indigo-9" style="width:32%">400B+</div>
-    </div>
-    <div flex="~ justify-between" mt1.5 text-xs op50>
-      <span>Qwen2.5-0.5B</span>
-      <span>Phi-1.5 / Gemma-2</span>
-      <span>Llama-3-8B</span>
-      <span>Llama-3-70B</span>
-      <span>GPT-4o / Llama-405B</span>
-    </div>
-  </div>
-
-  <div v-click="2" bg-amber:10 border="~ amber/30 rounded-lg" px4 py3>
-    <div flex="~ items-center gap-2" mb1.5>
-      <div class="i-solar:info-circle-broken text-lg text-amber-6"></div>
-      <span font-semibold text-amber-7 text-sm>What a 500M model actually is</span>
-    </div>
-    <div flex="~ gap-2 text-xs flex-wrap">
-      <span bg-white:60 rounded px2 py1>Runs on a phone / CPU</span>
-      <span bg-white:60 rounded px2 py1>Fine-tunes on a single GPU</span>
-      <span bg-white:60 rounded px2 py1>Coherent short-form text</span>
-      <span bg-white:60 rounded px2 py1>Weak multi-step reasoning</span>
-    </div>
-  </div>
-
-</div>
-
-<!--
-Presenter Notes:
-- Opening: State the verdict flatly — 500M is NOT a big LLM in 2025. It's the small tier.
-- Click 1: Walk the log-scale bar. Point out that 500M is at the far left; the "big" label only starts around 70B and above. Name a few concrete 0.5B-class models (Qwen2.5-0.5B, SmolLM) so the audience can anchor.
-- Click 2: Reframe what 500M can actually do — it's deployable, cheap, coherent, but weak at multi-step reasoning. This sets up the "so is it too small for our task?" tension that the next slide resolves.
--->
-
----
-
-<div flex="~ col gap-3" py2>
-
-  <div text-sm font-semibold op70 flex="~ items-center gap-2">
-    <div class="i-solar:scale-broken text-base text-sky-6"></div>
-    But "big" is relative — the answer flips with the frame
-  </div>
-
-  <div grid="~ cols-3 gap-3">
-    <div v-click="1" bg-rose:10 border="~ rose/30 rounded-lg" p3 flex="~ col gap-1">
-      <div flex="~ items-center gap-1.5" text-rose-6 font-semibold text-xs><div i-carbon:close-filled /> Frontier framing</div>
-      <div text-2xl font-bold>Small</div>
-      <div text-xs op70>500M vs 70–400B+ — a negligible capability ceiling.</div>
-    </div>
-    <div v-click="2" bg-teal:10 border="~ teal/30 rounded-lg" p3 flex="~ col gap-1">
-      <div flex="~ items-center gap-1.5" text-teal-6 font-semibold text-xs><div i-carbon:checkmark-filled /> Edge framing</div>
-      <div text-2xl font-bold>Mid</div>
-      <div text-xs op70>Largest class that still ships on-device — "big for a phone."</div>
-    </div>
-    <div v-click="3" bg-indigo:10 border="~ indigo/30 rounded-lg" p3 flex="~ col gap-1">
-      <div flex="~ items-center gap-1.5" text-indigo-6 font-semibold text-xs><div i-carbon:checkmark-filled /> KT-research framing</div>
-      <div text-2xl font-bold>Huge</div>
-      <div text-xs op70>Classic KT models (DKT, AKT) are ~1–10M — 500M is 50–500×.</div>
-    </div>
-  </div>
-
-  <div v-click="4" bg-gray:10 border="~ gray/30 rounded-lg" px4 py3>
-    <div flex="~ items-center gap-2" mb1.5>
-      <div class="i-solar:widget-5-broken text-lg text-gray-5"></div>
-      <span font-semibold text-sm>So for <i>our</i> stack</span>
-    </div>
-    <div grid="~ cols-2 gap-3 text-xs">
-      <div flex="~ items-start gap-1.5">
-        <div i-carbon:arrow-up-right text-emerald-6 mt0.5 />
-        <span><b>Upside:</b> 500M buys reasoning + synthesis a 10M KT head cannot — the audit's affective bias could be fixed in-model.</span>
-      </div>
-      <div flex="~ items-start gap-1.5">
-        <div i-carbon:arrow-down-right text-amber-6 mt0.5 />
-        <span><b>Cost:</b> 50–500× the params. If Phase 1 graph + Phase 2 KT already carry the state, 500M may be <i>oversized</i>.</span>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<!--
-Presenter Notes:
-- Opening: Same question, different answer — remind the room that "big" is a frame, not a fact.
-- Click 1: Frontier framing — here 500M is plainly small.
-- Click 2: Edge/deployment framing — the largest class that still runs on-device, so "big for a phone."
-- Click 3: Now the frame that matters for THIS project: KT research. Classic DKT/AKT models are 1–10M params; 500M is 50–500× larger than the KT tradition. This is where 500M genuinely looks "big."
-- Click 4: Land the takeaway — 500M is a reasonable ceiling if we want the reasoning power to fix things like affective bias, but it's oversized if Phase 1 graph embeddings and Phase 2 classical KT already do the heavy lifiting. The decision is a compute-vs-capability trade, not a "big/small" label.
--->
----
-
-# Summary — What the 500M Model Can & Cannot Do
-
-<div grid="~ cols-2 gap-4" mt-4 text-sm>
-
-<div v-click="1" bg-green:5 border="~ green/30 rounded-lg" p4>
-<div flex="~ items-center gap-2" mb2 text-green-6 font-bold>
-<div i-carbon:checkmark-filled text-xl /> What it does well (Zero-shot)
-</div>
-<ul flex="~ col gap-2" text-gray-700>
-<li>· <b>Dialogue Mechanics:</b> Perfectly identifies teacher moves (focusing/probing) and correction responses.</li>
-<li>· <b>Binary Correctness:</b> Reliably flags whether the final answer is right or wrong.</li>
-<li>· <b>Metacognition & Persistence:</b> Accurately gauges self-monitoring and sustained effort.</li>
-<li>· <b>Speed:</b> 92ms latency with minimal state-token overhead (75 tokens).</li>
-</ul>
-</div>
-
-<div v-click="2" bg-rose:5 border="~ rose/30 rounded-lg" p4>
-<div flex="~ items-center gap-2" mb2 text-rose-6 font-bold>
-<div i-carbon:close-filled text-xl /> Where it fails (Needs Peripherals)
-</div>
-<ul flex="~ col gap-2" text-gray-700>
-<li>· <b>Affective Bias:</b> Hallucinates confusion/frustration when an error is present.</li>
-<li>· <b>Cognitive Depth:</b> Defaults to "Remembering" instead of "Applying/Analyzing".</li>
-<li>· <b>Granular Error Taxonomy:</b> Confuses "careless slips" with "conceptual misinterpretations".</li>
-<li>· <b>KC Status:</b> Struggles to distinguish "error_involved" from "needs_more_support".</li>
-</ul>
-</div>
-
-</div>
-
-<div v-click="3" mt-4 rounded-r-lg border-l-4 border-orange-400:60 bg-orange:10 px4 py3 text-sm text-gray-700>
-<b class="text-orange-600">Architectural Implication:</b> We should not ask the 500M model to infer deep cognitive states or emotions in isolation. Instead, we feed its <b>structural outputs</b> (moves, binary correctness) into the <b>Classical KT Model (Phase 2)</b>, and use <b>Graph Embeddings</b> to ground its error classification. The 500M model is the fast System-1 parser, not the final diagnostician.
-</div>
-
-
----
 
 # What's Next: Validating the Asymmetric Pipeline
 
@@ -780,4 +634,3 @@ Presenter Notes:
 <div v-click="5" mt-4 rounded-r-lg border-l-4 border-orange-500:60 bg-orange-500:5 px-4 py-3 text-sm text-gray-600 dark:text-gray-200>
   <b class="text-orange-500 dark:text-orange-300">Immediate Next Action:</b> Run the 500M model fine-tuning on the expanded schema dataset. Evaluate if it can reliably distinguish "careless" vs "misinterpret" errors and correctly flag ZPD states without hallucinating affective states.
 </div>
-
