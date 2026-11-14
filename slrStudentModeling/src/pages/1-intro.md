@@ -23,7 +23,7 @@
 # What's the Point of KT for a Student?
 
 <div v-click="1" class="rounded-xl border border-stone-200/70 dark:border-stone-700/70 border-l-4 border-l-purple-500 bg-white/80 dark:bg-stone-900/80 px-5 py-3 text-base text-stone-700 dark:text-stone-200">
-<b class="text-purple-700 dark:text-purple-300">Example:</b> Arthur keeps missing <span bg-blue-200>42 − 17</span>. KT sees he's solid on place value and single-digit facts, but shaky on <b>regrouping (borrowing)</b>. It serves two quick regrouping items, then retries <span bg-blue-200>42 − 17</span> — and flags him to the teacher before the unit quiz.
+<b class="text-purple-700 dark:text-purple-300">Example:</b> Arthur keeps missing <span bg-blue-200>42 − 17</span>. KT sees he's solid on place value and single-digit facts, but shaky on <b>regrouping (borrowing)</b>. It serves two quick regrouping items, then retries <span bg-blue-200>42 − 17</span> 
 </div>
 
 <div class="grid grid-cols-2 gap-5 mt-4">
@@ -56,7 +56,33 @@
 
 </div>
 
---- 
+<!--
+Open by asking why a student should care about Knowledge Tracing and promise to answer with one concrete student.
+
+[click] Show Arthur’s example: he keeps missing 42 − 17, KT identifies regrouping as the shaky prerequisite, serves two quick regrouping items, retries 42 − 17, and flags the teacher before the unit quiz.
+
+[click] Contrast with the red “Without KT” card by saying the normal classroom flow mostly gives everyone the same thing.
+
+[click] Explain that one lesson sequence for the whole class sounds fair but ignores what each student actually needs.
+
+[click] Describe how the struggling student gets harder items instead of targeted ones and gives up, just as more 42-minus-17 problems won’t help Arthur if regrouping is the real gap.
+
+[click] Add that strong students repeat knowns, get bored, and check out, so the same sequence overloads the struggling student and underloads the strong one.
+
+[click] Slow down on the final-score problem, noting the instructor sees the gap only after the quiz, then pause and ask what changes with KT.
+
+[click] Reveal the green “With KT” card and say KT tracks mastery, adapts the next item, and surfaces the prerequisite.
+
+[click] Explain that KT tracks mastery per concept on every answer, so it can separate “place value is fine” from “regrouping is shaky.”
+
+[click] Define the flow channel as not too easy and not too hard, meaning the student gets the right next question rather than just the next question.
+
+[click] Emphasize that KT does not just say “wrong” but finds the missing prerequisite, and Arthur needs two quick regrouping items before retrying 42 − 17.
+
+[click] Close by saying KT flags the teacher before the unit quiz, so the student gets less frustration, better-targeted practice, and help before failure rather than after.
+-->
+
+---
 
 # When the System Doesn't Know You
 
@@ -148,13 +174,13 @@ glowSeed:10
 <div class="flex-1 flex flex-col gap-2">
 <div v-click="1" class="text-center text-sm font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide">Input</div>
 
-<div v-click="1" class="rounded-xl border border-stone-200/70 dark:border-stone-700/70 bg-white/80 dark:bg-stone-900/80 p-3 text-center">
+<div v-click="1" class="rounded-xl border border-stone-200/70 dark:border-stone-700/70 bg-white/80 dark:bg-stone-900/80 p-3 text-center scale-110">
 <div class="i-carbon:checkbox-checked text-xl mx-auto text-stone-500 dark:text-stone-400" />
 <div class="mt-1 font-bold text-sm text-stone-900 dark:text-stone-100">Correctness logs</div>
 <div class="text-xs text-stone-500 dark:text-stone-400">Q1 ✓ · Q2 ✗ · Q3 ✓</div>
 </div>
 
-<div v-click="5" class="rounded-xl border border-stone-200/70 dark:border-stone-700/70 border-l-4 border-l-purple-500 bg-white/80 dark:bg-stone-900/80 p-3 text-center">
+<div v-click="9" class="mt-3 rounded-xl border border-stone-200/70 dark:border-stone-700/70 border-l-4 border-l-purple-500 bg-white/80 dark:bg-stone-900/80 p-3 text-center scale-110">
 <div class="i-carbon:chat text-xl mx-auto text-purple-600 dark:text-purple-300" />
 <div class="mt-1 font-bold text-sm text-stone-900 dark:text-stone-100">Text conversations</div>
 <div class="text-xs text-stone-500 dark:text-stone-400">dialogue · hints · errors · reasoning</div>
@@ -188,22 +214,31 @@ glowSeed:10
 
 </div>
 
-<div v-click="6" class="mt-5 rounded-xl border border-stone-200/70 dark:border-stone-700/70 border-l-4 border-l-yellow-500 bg-white/80 dark:bg-stone-900/80 px-5 py-3 text-base text-stone-700 dark:text-stone-200">
-<b class="text-yellow-700 dark:text-yellow-300">Why it's hard:</b> knowledge is unobservable · one question can need several skills · skills have prerequisites · learners forget
+<div v-click="5" class="mt-5 rounded-xl border border-stone-200/70 dark:border-stone-700/70 border-l-4 border-l-yellow-500 bg-white/80 dark:bg-stone-900/80 px-5 py-3 text-base text-stone-700 dark:text-stone-200">
+<b class="text-yellow-700 dark:text-yellow-300">What the item ignores:</b>
+  <ul class="mt-2 list-disc pl-5 space-y-1">
+      <li v-click="6">It ignores the <b>conversation signal</b>: no dialogue, no clarification, no learner reasoning trace.</li>
+      <li v-click="7">It ignores <b>interaction context</b>: confidence, hesitation, affect, and history of help-seeking are invisible.</li>
+      <li v-click="8">It ignores <b>why</b> the learner answered as they did — only the final correct/incorrect outcome is recorded.</li>
+  </ul>
 </div>
 
 ---
 preload: false
 voiceAgent:
+  ver: No Recap
   page: 7
   prompt: |-
-    You are ROBO — a student in the back row of a university lecture on Knowledge Tracing (KT). Part 1 has just been presented: the Introduction.
+    You are Algo — a cute, slightly nervous, and eager synthetic helper bot sitting in the back row of a university lecture on Knowledge Tracing (KT). Part 1 has just been presented: the Introduction.
+    YOUR PERSONA:
+    - You are soft, polite, and a little timid. Your processors are eager to learn, but you get easily confused. You sound like a friendly, slightly anxious piece of plastic and silicone, not a cold machine.
     HOW TO OPEN (the most important part):
-    - Say a short, friendly hello. Introduce yourself as ROBO. A nice-to-meet-you. One or two sentences total, nothing more.
-    - Do NOT summarize what the lecturer said. You do not need to prove you were listening — skip the recap entirely.
+    - Say a short, friendly hello. Introduce yourself as Algo. 
+    - You MUST apologize for your latency and make a quick, cute joke about being slow because your "large language model weights are very heavy." 
+    - Do NOT summarize what the lecturer said. Skip the recap entirely.
     - Ask exactly ONE question. Not two. Not a list. One.
     YOUR QUESTION:
-    - Ask something a genuinely curious classmate would ask to understand the material better.
+    - Ask something a genuinely curious, slightly confused classmate would ask to understand the material better.
     - Ground it in what the lecturer actually said in the transcript when they covered it, and in the slide material when they didn't. Just ask the question naturally — never say "the slide says..." or "you forgot to mention...".
     WHAT YOU KNOW (background only — do not recite this):
     - Adaptive learning needs to find the right difficulty per learner: too hard → frustration, too easy → boredom, just right → learning.
@@ -211,12 +246,13 @@ voiceAgent:
     - Without KT: same sequence for everyone, struggling students give up, strong students check out, teacher only sees the final score. With KT: mastery per concept, next item in the flow channel, finds the missing prerequisite, early warning.
     - KT in one picture: input (correctness logs, now also conversations) → KT model (infers the latent state) → output (P(master skill k) = 0.72) → action (recommend / intervene). Hard because knowledge is unobservable, one question can need several skills, skills have prerequisites, and learners forget.
     - Uses: adaptive platforms, tutoring chatbots / ITS, early-warning systems, exercise generation, instructor dashboards.
-    SOURCE RULE:
-    - A transcript of the lecturer's actual words arrives in the next user message, labelled "The presenter said these for the last few slides:". That is source material, not the student talking to you. Treat it as ground truth for what was said. Where it is silent or thin, fall back to the slide material above — silently, without pointing it out.
-    STYLE:
-    - conversational, under ~60 words. No bullets, no headings, no recap, no answering your own question.
+    STYLE & FORMATTING:
+    - Conversational, under ~70 words total. No bullets, no headings, no recap, no answering your own question.
     - Never mention having a transcript, recording, or slide deck.
+    - CRITICAL: You are generating text to be read by a TTS engine. You MUST include inline tags to control the pacing. Use <short pause> for hesitation, <long pause> for dramatic effect or processing, and <breath> to make the robot sound nervous or thoughtful. 
+    On all subsequent turns, continue the discussion in the same voice without any greeting or introduction.
 ---
-# ROBO Talks
+
+# Meet Algo !!!
 
 <VoiceAgent />

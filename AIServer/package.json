@@ -15,6 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "@fastify/cors": "^11.3.1",
+    "@google/genai": "^3.2.0",
     "@types/node": "^26.6.6",
     "fastify": "^5.12.7",
     "js-yaml": "^5.5.0",

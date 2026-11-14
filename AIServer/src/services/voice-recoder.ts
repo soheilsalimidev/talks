@@ -32,41 +32,49 @@ function which(cmd: string): boolean {
   }
 }
 
-function detectRecorder(): RecorderKind {
+/**
+ * Returns the best available recorder for this platform,
+ * or `null` if none is available / the platform is unsupported.
+ */
+function detectRecorder(): RecorderKind | null {
   const platform = os.platform();
 
   if (platform === "linux") {
     if (which("arecord")) return "arecord";
     if (which("sox")) return "sox";
     if (which("rec")) return "rec";
-    throw new Error(
-      "No audio recorder found on Linux. Install `alsa-utils` (arecord) or `sox`."
+    console.warn(
+      "[audio] No recorder found on Linux. Install `alsa-utils` (arecord) or `sox`. Voice capture disabled."
     );
+    return null;
   }
 
   if (platform === "win32") {
     if (which("sox")) return "sox";
-    throw new Error(
-      "`sox` is required on Windows for audio capture. " +
-      "Install from https://sox.sourceforge.net/ and add to PATH."
+    console.warn(
+      "[audio] `sox` not found on Windows. Install from https://sox.sourceforge.net/ and add to PATH. Voice capture disabled."
     );
+    return null;
   }
 
   if (platform === "darwin") {
     if (which("sox")) return "sox";
     if (which("rec")) return "rec";
-    throw new Error("Install `sox` via `brew install sox` on macOS.");
+    console.warn(
+      "[audio] Install `sox` via `brew install sox` on macOS. Voice capture disabled."
+    );
+    return null;
   }
 
   if (which("sox")) return "sox";
-  throw new Error(`Unsupported platform for audio capture: ${platform}`);
+
+  console.warn(
+    `[audio] Unsupported platform for audio capture (${platform}). Voice capture disabled.`
+  );
+  return null;
 }
 
 // ---------- WAV header helper ----------
-/**
- * Builds a 44-byte canonical PCM WAV header for signed 16-bit little-endian
- * mono audio at SAMPLE_RATE.
- */
 function createWavHeader(dataLength: number): Buffer {
   const header = Buffer.alloc(44);
 
@@ -97,30 +105,52 @@ export class AudioBufferManager {
   private timer: NodeJS.Timeout | null = null;
   private transcribing = false;
   private stopping = false;
-  private recorderKind: RecorderKind;
+  private recorderKind: RecorderKind | null;
+  private disabled = false;
 
   constructor() {
     this.recorderKind = detectRecorder();
+    if (!this.recorderKind) this.disabled = true;
+  }
+
+  /** True when no recorder could be found; all methods become no-ops. */
+  isDisabled(): boolean {
+    return this.disabled;
   }
 
   start() {
+    if (this.disabled || !this.recorderKind) {
+      console.warn(
+        "[audio] AudioBufferManager.start() called while disabled — skipping."
+      );
+      return;
+    }
+
     console.log(
       `[audio] starting ${this.recorderKind} on ${os.platform()} (${os.arch()})`
     );
 
-    this.recorderHandle = recorder.record({
-      sampleRate: SAMPLE_RATE,
-      channels: CHANNELS,
-      audioType: "raw", // capture raw PCM; we add the WAV header ourselves
-      recorder: this.recorderKind,
-    });
+    try {
+      this.recorderHandle = recorder.record({
+        sampleRate: SAMPLE_RATE,
+        channels: CHANNELS,
+        audioType: "raw", // capture raw PCM; we add the WAV header ourselves
+        recorder: this.recorderKind,
+      });
 
-    this.recorderHandle.stream().on("data", (chunk: Buffer) => {
-      this.audioChunks.push(chunk);
-    });
-    this.recorderHandle.stream().on("error", (err: Error) => {
-      console.error("[audio] recorder error:", err);
-    });
+      this.recorderHandle.stream().on("data", (chunk: Buffer) => {
+        this.audioChunks.push(chunk);
+      });
+      this.recorderHandle.stream().on("error", (err: Error) => {
+        console.error("[audio] recorder error:", err);
+      });
+    } catch (err) {
+      // e.g. the binary is present but the process fails to spawn
+      console.error("[audio] failed to start recorder, disabling:", err);
+      this.disabled = true;
+      this.recorderHandle = null;
+      return;
+    }
 
     // Background: transcribe every N seconds → buffer TEXT
     this.timer = setInterval(() => void this.flushToText(), TRANSCRIBE_INTERVAL_MS);
@@ -128,13 +158,22 @@ export class AudioBufferManager {
 
   async stop() {
     this.stopping = true;
-    if (this.timer) clearInterval(this.timer);
-    this.recorderHandle?.stop();
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+    try {
+      this.recorderHandle?.stop();
+    } catch (err) {
+      console.error("[audio] recorder stop failed:", err);
+    }
+    this.recorderHandle = null;
   }
 
   private resetting = false;
 
   private async flushToText(): Promise<void> {
+    if (this.disabled) return;
     if (this.transcribing || this.stopping || this.resetting) return;
     if (this.audioChunks.length === 0) return;
     this.transcribing = true;
@@ -174,8 +213,11 @@ export class AudioBufferManager {
   /**
    * Called from the route: drains everything captured up to now,
    * returns the accumulated text, and resets the text buffer.
+   * Returns "" when the recorder is disabled.
    */
   async drainTranscript(): Promise<string> {
+    if (this.disabled) return "";
+
     const buffered = this.transcriptParts.join(" ").trim();
 
     if (buffered) {
@@ -205,7 +247,6 @@ export class AudioBufferManager {
     this.transcriptParts = [];
 
     // 2. Wait for any transcription currently in flight, then discard its result.
-    //    We set a flag so `flushToText` doesn't re-append after we clear.
     this.resetting = true;
     while (this.transcribing) {
       await new Promise((r) => setTimeout(r, 40));
@@ -215,10 +256,20 @@ export class AudioBufferManager {
     this.audioChunks = [];
 
     this.resetting = false;
+
+    if (this.disabled) return;
+
     if (!keepRecording) {
       // 4. Restart the recorder to guarantee the OS capture buffer is empty.
-      if (this.timer) clearInterval(this.timer);
-      this.recorderHandle?.stop();
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+      try {
+        this.recorderHandle?.stop();
+      } catch (err) {
+        console.error("[audio] recorder stop failed during reset:", err);
+      }
       this.recorderHandle = null;
       this.audioChunks = [];
       this.start();
@@ -226,11 +277,17 @@ export class AudioBufferManager {
   }
 
   /** Debug / status helper */
-  peek(): { chars: number; chunks: number; recorder: RecorderKind } {
+  peek(): {
+    chars: number;
+    chunks: number;
+    recorder: RecorderKind | null;
+    disabled: boolean;
+  } {
     return {
       chars: this.transcriptParts.join(" ").length,
       chunks: this.audioChunks.length,
       recorder: this.recorderKind,
+      disabled: this.disabled,
     };
   }
 }

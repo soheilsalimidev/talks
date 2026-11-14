@@ -5,7 +5,7 @@
 
 <h1 class="!text-6xl !mt-7 !mb-0 text-stone-900 dark:text-stone-100">The Method</h1>
 
-<p class="mt-5 text-xl text-stone-500 dark:text-stone-400">What's missing from the literature — and exactly how we searched for it.</p>
+<p class="mt-5 text-xl text-stone-900 dark:text-stone-400">What's missing from the literature — and exactly how we searched for it.</p>
 
 <div class="mt-10 flex items-center gap-2">
 <span class="h-2.5 w-16 rounded-full bg-stone-300 dark:bg-stone-700"></span>
@@ -34,9 +34,9 @@
 <span class="text-base text-stone-700 dark:text-stone-200">How are LLMs <b>technically integrated</b> into KT architectures?</span>
 </div>
 
-<div v-click="3" class="flex items-center gap-4 rounded-xl border border-stone-200/70 dark:border-stone-700/70 border-l-4 border-l-yellow-500 bg-white/80 dark:bg-stone-900/80 px-5 py-2.5">
-<span class="shrink-0 rounded-full bg-yellow-100 dark:bg-yellow-900/50 px-3 py-0.5 text-sm font-black text-yellow-800 dark:text-yellow-200">RQ3</span>
-<span class="text-base text-stone-800 dark:text-stone-100">Is there real <b>pedagogical grounding</b> — or just better prediction?</span>
+<div v-click="3" class="flex items-center gap-4 rounded-xl border border-stone-200/70 dark:border-stone-700/70 border-l-4 border-l-blue-500 bg-white/80 dark:bg-stone-900/80 px-5 py-2.5">
+<span class="shrink-0 rounded-full bg-blue-100 dark:bg-blue-900/50 px-3 py-0.5 text-sm font-black text-blue-800 dark:text-blue-200">RQ3</span>
+<span class="text-base text-stone-800 dark:text-stone-100">Where does <b>pedagogical grounding</b> actually sit in these systems — an input, a constraint, or just a claim?</span>
 </div>
 
 <div v-click="4" class="flex items-center gap-4 rounded-xl border border-stone-200/70 dark:border-stone-700/70 border-l-4 border-l-blue-500 bg-white/80 dark:bg-stone-900/80 px-5 py-2.5">

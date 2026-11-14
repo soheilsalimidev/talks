@@ -1,17 +1,24 @@
 <template>
   <div class="flex flex-col items-center gap-4 font-sans p-4">
-    <div ref="reference" class="w-[200px] h-[200px]" />
+    <div ref="reference" class="w-[250px] h-[250px]" />
 
-    <div class="h-6 w-full max-w-[300px] flex items-center justify-center">
-      <p class="text-sm text-center text-gray-800 truncate">
-        {{ displayText }}
-      </p>
+    <!-- Subtitle: bigger, animated card -->
+    <div class="min-h-[96px] w-full max-w-[640px] flex items-center justify-center">
+      <Transition name="subtitle" mode="out-in">
+        <p :key="subtitleKey" class="text-xl  font-extrabold text-center text-gray-900
+                 leading-snug tracking-tight
+                 px-5 py-3 rounded-2xl
+                 bg-white/80 backdrop-blur-sm ring-1 ring-black/10
+                 shadow-[0_8px_28px_-10px_rgba(0,0,0,0.35)]
+                 subtitle-text" :class="{ 'subtitle-thinking': loading }">
+          {{ displayText }}
+        </p>
+      </Transition>
     </div>
 
-    <!-- Click = play the prefetched audio (does NOT trigger a fetch). -->
     <div v-click />
 
-    <p v-if="error && !loading" class="text-xs text-red-600">{{ error }}</p>
+    <p v-if="error && !loading" class="text-sm text-red-600">{{ error }}</p>
   </div>
 </template>
 
@@ -38,6 +45,12 @@ const userText = ref('')
 const loading = ref(false)
 const error = ref('')
 
+// Key drives the subtitle pop-in animation. Changes whenever the
+// displayed text changes (new chunk, "Thinking…", error → cleared, …).
+const subtitleKey = computed(() =>
+  `${loading.value ? 'L' : '-'}|${error.value}|${dialogue.value}`
+)
+
 const displayText = computed(() => {
   if (loading.value) return 'Thinking…'
   if (error.value) return error.value
@@ -49,24 +62,61 @@ let runId = 0
 let isMounted = false
 let currentAudio: HTMLAudioElement | null = null
 
-// Prefetched audio, held in memory until the user clicks.
+// ---------- prefetch state ----------
 let prefetchedBlobUrl: string | null = null
 let prefetchedReply = ''
 let prefetchedHeard = ''
+let prefetchedWords: WordTimestamp[] = []
 let prefetchPromise: Promise<boolean> | null = null
 
-const VALID_EMOTIONS = [
-  'neutral', 'happy', 'excited', 'thinking', 'encouraging', 'sad',
-  'surprised', 'sleepy', 'love', 'confused', 'proud', 'shy',
-] as const
+// ---------- subtitle tuning ----------
+const SUBTITLE_CHUNK = 5 // words shown per chunk
 
-const VALID_GESTURES = [
-  'wave', 'jump', 'spin', 'nod', 'shake', 'shrug', 'point', 'clap', 'bounce', 'nuzzle',
-] as const
+// ---------- pre-play "gathering thoughts" beat ----------
+// Even when audio is already prefetched (i.e. would otherwise start
+// instantly), sit on the thinking pose for a random beat so the robot
+// never snaps straight from idle into speech.
+const START_THINK_MIN_MS = 350
+const START_THINK_MAX_MS = 1200
 
-const VALID_LOCOMOTIONS = ['idle', 'walk', 'fly', 'roll'] as const
+function randomStartDelay(): number {
+  return START_THINK_MIN_MS + Math.random() * (START_THINK_MAX_MS - START_THINK_MIN_MS)
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((r) => setTimeout(r, ms))
+}
+
+interface WordTimestamp {
+  word: string
+  start: number // seconds
+  end: number   // seconds
+}
+
+// ---------- emotion types & rotation ----------
+type EmotionName =
+  | 'neutral' | 'happy' | 'excited' | 'thinking'
+  | 'encouraging' | 'sad' | 'surprised' | 'sleepy' | 'love'
+  | 'confused' | 'proud' | 'shy'
+
+// Ordered so speech-appropriate faces dominate, but every valid
+// emotion still gets a chance to appear. Swap entries around if you
+// want a different vibe.
+const SPEAKING_EMOTIONS: EmotionName[] = [
+  'happy', 'excited', 'proud', 'encouraging', 'love',
+  'surprised', 'thinking', 'confused', 'shy', 'neutral',
+  'sleepy', 'sad',
+]
+
+function pickEmotion(exclude?: EmotionName): EmotionName {
+  const pool = exclude
+    ? SPEAKING_EMOTIONS.filter((e) => e !== exclude)
+    : SPEAKING_EMOTIONS
+  return pool[Math.floor(Math.random() * pool.length)]
+}
+
+// ---------- other enums ----------
 const VALID_VISEMES = ['rest', 'aa', 'mbp', 'u', 'l'] as const
-
 type VisemeName = (typeof VALID_VISEMES)[number]
 
 interface VisemeFrame {
@@ -78,20 +128,13 @@ interface VisemeFrame {
 interface VoicePart {
   text: string
   audio?: string
-  emotion: string
+  emotion: EmotionName
   gesture: string | null
   locomotion: string
   speed: number
   duration: number
   providedVisemeTrack: VisemeFrame[]
-}
-
-const ENGLISH_VISEME_MAP: Record<string, VisemeName> = {
-  a: 'aa', e: 'aa', i: 'aa', o: 'aa', y: 'aa',
-  u: 'u', w: 'u',
-  m: 'mbp', b: 'mbp', p: 'mbp',
-  l: 'l', t: 'l', d: 'l', n: 'l', s: 'l', z: 'l', r: 'l', c: 'l',
-  g: 'l', h: 'l', k: 'l', v: 'l', f: 'l', j: 'l', q: 'l', x: 'l',
+  words: WordTimestamp[]
 }
 
 // ============================================================
@@ -103,11 +146,10 @@ onMounted(() => {
   isMounted = true
 
   rig = new ActorRig(CHARACTERS.robo, {
-    size: 200,
+    size: 250,
     micro: { amount: 0.5, saccade: 0.5 },
   }).mount(el.value)
 
-  // Start in "thinking" while we fetch the audio.
   rig.apply({
     emotion: 'thinking',
     locomotion: 'idle',
@@ -117,7 +159,6 @@ onMounted(() => {
     mouthOpen: 0,
   })
 
-  // Kick off the fetch immediately — do NOT play.
   prefetchPromise = prefetch()
 })
 
@@ -130,19 +171,17 @@ onUnmounted(() => {
     URL.revokeObjectURL(prefetchedBlobUrl)
     prefetchedBlobUrl = null
   }
+  prefetchedWords = []
 
   rig?.destroy()
   rig = null
 
-  // Fire-and-forget reset so the next slide starts with a clean buffer.
   fetch(`${props.endpoint}/reset`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ keepRecording: true }),
     keepalive: true,
-  }).catch(() => {
-    /* ignored — page is going away */
-  })
+  }).catch(() => { /* page is going away */ })
 })
 
 // ============================================================
@@ -156,36 +195,41 @@ watch(clicks, async (newVal, oldVal) => {
 })
 
 // ============================================================
-// Prefetch: fetch audio in background, do NOT play
+// Prefetch
 // ============================================================
 
 async function prefetch(): Promise<boolean> {
   if (currentPage.value !== currentFrontmatter.value.voiceAgent?.page) {
     console.log(currentFrontmatter.value.voiceAgent?.page)
-    return
+    return false
   }
   try {
-
     const res = await fetch(props.endpoint, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ prompt: currentFrontmatter.value.voiceAgent?.prompt ?? '' }),
+      body: JSON.stringify({
+        prompt: currentFrontmatter.value.voiceAgent?.prompt ?? '',
+      }),
     })
 
     if (!isMounted) return false
-    if (res.status === 409) return false // no buffered transcript yet
     if (!res.ok) return false
 
-    const blob = await res.blob()
+    const data: any = await res.json()
     if (!isMounted) return false
+    if (!data || typeof data.audio !== 'string' || !data.audio) return false
+
+    const blob = base64ToBlob(data.audio, data.mime ?? 'audio/wav')
     if (!blob.size) return false
 
     if (prefetchedBlobUrl) URL.revokeObjectURL(prefetchedBlobUrl)
     prefetchedBlobUrl = URL.createObjectURL(blob)
-    prefetchedHeard = decodeURIComponent(res.headers.get('X-User-Transcript') ?? '')
-    prefetchedReply = decodeURIComponent(res.headers.get('X-Assistant-Reply') ?? '')
+    prefetchedHeard = data.heard ?? ''
+    prefetchedWords = Array.isArray(data.words) ? data.words : []
+    prefetchedReply =
+      (data.reply && String(data.reply)) ||
+      prefetchedWords.map((w) => w.word).join(' ')
 
-    // Character is ready to speak on click.
     rig?.apply({
       emotion: 'happy',
       locomotion: 'idle',
@@ -202,7 +246,7 @@ async function prefetch(): Promise<boolean> {
 }
 
 // ============================================================
-// Play: use prefetched audio, or wait / retry if not ready
+// Play
 // ============================================================
 
 async function playOnClick(): Promise<void> {
@@ -210,7 +254,6 @@ async function playOnClick(): Promise<void> {
 
   error.value = ''
 
-  // If nothing prefetched yet, wait for the in-flight fetch (or retry).
   if (!prefetchedBlobUrl) {
     loading.value = true
     rig.apply({ emotion: 'thinking', locomotion: 'idle', speed: 1, gesture: null })
@@ -228,43 +271,112 @@ async function playOnClick(): Promise<void> {
     return
   }
 
-  // Consume the prefetched audio.
   const url = prefetchedBlobUrl
   const reply = prefetchedReply
   const heard = prefetchedHeard
+  const words = prefetchedWords
+
   prefetchedBlobUrl = null
   prefetchedReply = ''
   prefetchedHeard = ''
+  prefetchedWords = []
   prefetchPromise = null
 
   userText.value = heard
   dialogue.value = ''
 
   const id = ++runId
-  const duration = estimateDurationFromText(reply)
+
+  // --- Random "gathering thoughts" beat before we start speaking ---
+  // Always runs, even when the audio was prefetched, so the robot
+  // visibly thinks for a moment instead of instantly talking.
+  loading.value = true
+  rig.apply({
+    emotion: 'thinking',
+    locomotion: 'idle',
+    speed: 1,
+    gesture: null,
+    viseme: 'rest',
+    mouthOpen: 0,
+  })
+  await sleep(randomStartDelay())
+  if (!isMounted || id !== runId) return
+
+  // Pre-populate the first subtitle *before* flipping `loading` off,
+  // so there's no blank flash between "Thinking…" and the first chunk.
+  // Both writes happen in the same tick → single <Transition>.
+  if (words.length > 0) {
+    dialogue.value = getChunkText(words, 0, SUBTITLE_CHUNK)
+  } else if (reply) {
+    dialogue.value = reply
+  }
+  loading.value = false
+
+  const duration =
+    words.length > 0
+      ? Math.max(1200, words[words.length - 1].end * 1000 + 300)
+      : estimateDurationFromText(reply)
 
   try {
     await playPart(
       {
         text: reply,
         audio: url,
-        emotion: 'neutral',
+        emotion: pickEmotion(),
         gesture: null,
         locomotion: 'idle',
         speed: 1,
         duration,
         providedVisemeTrack: [],
+        words,
       },
       id
     )
   } finally {
-    // The blob URL is no longer needed once playback ends.
     URL.revokeObjectURL(url)
   }
 }
 
 // ============================================================
-// Character animation helpers (unchanged)
+// Subtitle helpers
+// ============================================================
+
+function findWordIndex(words: WordTimestamp[], timeSec: number): number {
+  let lo = 0
+  let hi = words.length - 1
+  let ans = 0
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1
+    if (words[mid].start <= timeSec) {
+      ans = mid
+      lo = mid + 1
+    } else {
+      hi = mid - 1
+    }
+  }
+  return ans
+}
+
+function getChunkText(
+  words: WordTimestamp[],
+  chunkIdx: number,
+  chunkSize: number
+): string {
+  const start = chunkIdx * chunkSize
+  const end = Math.min(words.length, start + chunkSize)
+  return words.slice(start, end).map((w) => w.word).join(' ')
+}
+
+function base64ToBlob(b64: string, mime: string): Blob {
+  const bin = atob(b64)
+  const len = bin.length
+  const bytes = new Uint8Array(len)
+  for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i)
+  return new Blob([bytes], { type: mime })
+}
+
+// ============================================================
+// Character animation helpers
 // ============================================================
 
 function estimateDurationFromText(text: string): number {
@@ -274,8 +386,8 @@ function estimateDurationFromText(text: string): number {
 
 function pickRandomViseme(): VisemeName {
   const r = Math.random()
-  if (r < 0.10) return 'rest'   // brief closure — looks like a natural pause
-  if (r < 0.45) return 'aa'     // most common vowel
+  if (r < 0.1) return 'rest'
+  if (r < 0.45) return 'aa'
   if (r < 0.65) return 'u'
   if (r < 0.85) return 'mbp'
   return 'l'
@@ -289,22 +401,26 @@ function mouthOpenForViseme(viseme: VisemeName): number {
   return 0
 }
 
-
-
 function playPart(part: VoicePart, id: number): Promise<void> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     if (!rig) return resolve()
 
     const activeRig = rig
-    dialogue.value = part.text
 
+    if (part.words.length > 0) {
+      dialogue.value = getChunkText(part.words, 0, SUBTITLE_CHUNK)
+    } else {
+      dialogue.value = part.text
+    }
+
+    // Start on the emotion picked by the caller; switch per chunk.
+    let currentEmotion: EmotionName = part.emotion
     activeRig.apply({
-      emotion: part.emotion as any,
+      emotion: currentEmotion as any,
       locomotion: part.locomotion as any,
       speed: part.speed,
       gesture: null,
     })
-
     if (part.gesture) activeRig.playGesture(part.gesture as any)
 
     let audio: HTMLAudioElement | null = null
@@ -314,6 +430,7 @@ function playPart(part: VoicePart, id: number): Promise<void> {
     let fallbackStart = performance.now()
     let usingAudio = false
     let lastVisemeChange = 0
+    let currentChunk = -1
 
     function cleanup() {
       cancelAnimationFrame(raf)
@@ -332,6 +449,8 @@ function playPart(part: VoicePart, id: number): Promise<void> {
       finished = true
       cleanup()
       activeRig.apply({ viseme: 'rest', mouthOpen: 0 })
+      if (part.text) dialogue.value = part.text
+      else if (part.words.length) dialogue.value = part.words.map((w) => w.word).join(' ')
       resolve()
     }
 
@@ -354,15 +473,29 @@ function playPart(part: VoicePart, id: number): Promise<void> {
     function tick() {
       if (finished || id !== runId) return finish()
 
-      const elapsed =
+      const elapsedMs =
         usingAudio && audio && Number.isFinite(audio.currentTime)
           ? audio.currentTime * 1000
           : performance.now() - fallbackStart
 
-      // Switch visemes every 80–140 ms so the mouth keeps moving
-      // for the entire duration of the audio clip.
-      if (elapsed - lastVisemeChange >= 80 + Math.random() * 60) {
-        lastVisemeChange = elapsed
+      // --- Subtitle + emotion switch per chunk ---
+      if (part.words.length > 0) {
+        const tSec = elapsedMs / 1000
+        const idx = findWordIndex(part.words, tSec)
+        const chunk = Math.floor(idx / SUBTITLE_CHUNK)
+        if (chunk !== currentChunk) {
+          currentChunk = chunk
+          dialogue.value = getChunkText(part.words, chunk, SUBTITLE_CHUNK)
+
+          // Fresh face for each chunk — never the same one twice in a row.
+          currentEmotion = pickEmotion(currentEmotion)
+          activeRig.apply({ emotion: currentEmotion as any })
+        }
+      }
+
+      // --- Viseme update ---
+      if (elapsedMs - lastVisemeChange >= 80 + Math.random() * 60) {
+        lastVisemeChange = elapsedMs
         const viseme = pickRandomViseme()
         activeRig.apply({
           viseme: viseme as any,
@@ -381,7 +514,8 @@ function playPart(part: VoicePart, id: number): Promise<void> {
     audio.addEventListener('ended', onEnded)
     audio.addEventListener('error', onError)
 
-    audio.play()
+    audio
+      .play()
       .then(() => {
         if (finished || !audio) return
         usingAudio = true
@@ -399,3 +533,51 @@ function stopCurrentAudio() {
   currentAudio = null
 }
 </script>
+
+<style scoped>
+/* ---------- Subtitle look & feel ---------- */
+.subtitle-text {
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+  will-change: transform, opacity;
+}
+
+/* Gentle pulse while we're still fetching audio. */
+.subtitle-thinking {
+  animation: subtitle-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes subtitle-pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.72;
+    transform: scale(0.98);
+  }
+}
+
+/* Chunk change transition: spring-pop in, quick fade out.
+   mode="out-in" on the <Transition> means these never overlap,
+   so the layout stays put and the new chunk gets the spotlight. */
+.subtitle-enter-active {
+  transition: opacity 180ms ease-out, transform 260ms cubic-bezier(.2, 1.6, .4, 1);
+}
+
+.subtitle-leave-active {
+  transition: opacity 100ms ease-in, transform 100ms ease-in;
+}
+
+.subtitle-enter-from {
+  opacity: 0;
+  transform: translateY(10px) scale(0.9);
+}
+
+.subtitle-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.96);
+}
+</style>

@@ -5,6 +5,7 @@ allowBuilds:
   esbuild: true
   playwright-chromium: false
   pnpm: true
+  protobufjs: set this to true or false
 catalog:
   '@antfu/eslint-config': ^10.0.0
   '@eslint/config-inspector': ^3.5.0
